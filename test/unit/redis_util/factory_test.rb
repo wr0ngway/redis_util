@@ -130,6 +130,19 @@ module RedisUtil
         RedisUtil::Factory.reconnect
       end
 
+      should "be able to connect succesfully when it fails to connect the first time" do
+        mock_client = mock('redis')
+        mock_client.expects(:reconnect).twice.raises(StandardError).then.returns(nil)
+        resque_client = RedisUtil::Factory.connect(:resque)
+
+        resque_client.stubs(:client).returns(mock_client)
+
+        # Stub sleep so we don't wait forever
+        RedisUtil::Factory.stubs(:sleep)
+
+        RedisUtil::Factory.reconnect
+      end
+
       should "retry on failure" do
         mock_client = mock('redis')
         mock_client.expects(:reconnect).at_least(3).raises(StandardError)
